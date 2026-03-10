@@ -1,0 +1,55 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-service
+
+  cloud:
+    gateway:
+      # Spring Cloud 2025: all gateway config under server.webflux for gateway-server-webflux starter
+      server:
+        webflux:
+          globalcors:
+            corsConfigurations:
+              '[/**]':
+                allowedOrigins:
+                  - "*"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - PATCH
+                  - OPTIONS
+                allowedHeaders:
+                  - "*"
+                allowCredentials: false
+                maxAge: 3600
+
+          discovery:
+            locator:
+              enabled: true
+              lower-case-service-id: true
+
+          routes:
+            - id: order-service
+              uri: lb://order-service
+              predicates:
+                - Path=/orders/**
+
+            - id: product-service
+              uri: lb://product-service
+              predicates:
+                - Path=/product/**
+              filters:
+                - StripPrefix=1
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
