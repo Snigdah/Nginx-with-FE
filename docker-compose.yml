@@ -2,8 +2,9 @@ version: "3.9"
 
 services:
 
+  # ---------------- FRONTEND ----------------
   frontend-1:
-    image: frontend1:0.0.2
+    image: frontend1:0.0.3
     container_name: frontend-1
     networks:
       - frontend-network
@@ -13,6 +14,49 @@ services:
     container_name: frontend-2
     networks:
       - frontend-network
+
+  # ---------------- EUREKA ----------------
+  eureka-service:
+    image: eureka-service:1.0
+    container_name: eureka-service
+    networks:
+      - backend-network
+
+
+  # ---------------- API GATEWAY ----------------
+  gateway-service:
+    image: gateway-service:1.0
+    container_name: gateway-service
+    depends_on:
+      - eureka-service
+    environment:
+      - EUREKA_SERVER_URL=http://eureka-service:8761/eureka/
+    networks:
+      - backend-network
+
+
+  # ---------------- PRODUCT SERVICE ----------------
+  product-service:
+    image: product-service:1.0
+    container_name: product-service
+    depends_on:
+      - eureka-service
+    environment:
+      - EUREKA_SERVER_URL=http://eureka-service:8761/eureka/
+    networks:
+      - backend-network
+
+
+  # ---------------- ORDER SERVICE ----------------
+  order-service:
+    image: order-service:1.0
+    container_name: order-service
+    depends_on:
+      - eureka-service
+    environment:
+      - EUREKA_SERVER_URL=http://eureka-service:8761/eureka/
+    networks:
+      - backend-network
 
   nginx:
     image: nginx:alpine
@@ -26,9 +70,17 @@ services:
     depends_on:
       - frontend-1
       - frontend-2
+      - gateway-service
     networks:
       - frontend-network
+      - backend-network
 
+
+# ---------------- NETWORKS ----------------
 networks:
+
   frontend-network:
+    driver: bridge
+
+  backend-network:
     driver: bridge
